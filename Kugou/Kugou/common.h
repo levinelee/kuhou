@@ -16,15 +16,15 @@ extern	FMOD::Sound *	MusicToPlay;		//待播放音乐
 extern	FMOD::Channel *	Channel;			//频道？
 extern	FMOD_RESULT		Result;				//部分FMOD函数操作的返回
 
-static	HANDLE			ConsoleHandle = NULL; 
-static	CHAR_INFO		ConsoleBuffer[NUM_COLUMNS * NUM_ROWS] = {0};
-static	char			WriteBuffer[NUM_COLUMNS * NUM_ROWS] = {0};
-static	unsigned int	gYPos = 0;
-static	bool			Paused = false;
-static	std::vector<char *>	PathList;
+extern	HANDLE			ConsoleHandle = NULL; 
+extern	CHAR_INFO		ConsoleBuffer[NUM_COLUMNS * NUM_ROWS] = {0};
+extern	char			WriteBuffer[NUM_COLUMNS * NUM_ROWS] = {0};
+extern	unsigned int	gYPos = 0;
+extern	bool			Paused = false;
+extern	std::vector<char *>	PathList;
 
-int Kuhou_Private_Argc;
-char** Kuhou_Private_Argv;
+extern	int Kuhou_Private_Argc;
+extern	char** Kuhou_Private_Argv;
 
 unsigned int			version;
 void *					extradriverdata = 0;
