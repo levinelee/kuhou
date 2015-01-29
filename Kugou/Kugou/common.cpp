@@ -1,48 +1,30 @@
 #include "common.h"
-#include <conio.h>
-#include <vector>
-#include "common.h"
+#include "play.h"
 #include <fmod/fmod_errors.h>
+
+
+FMOD::System	*KuhouSystem;		//sys，不知道是什么
+FMOD::Sound *	MusicToPlay;		//待播放音乐
+FMOD::Channel *	Channel;			//频道？
+FMOD_RESULT		Result;				//部分FMOD函数操作的返回
+
+
 
 void (*Kuhou_Private_Update)(unsigned int*);
 void (*Kuhou_Private_Close)();
 void (*Kuhou_Private_Error)(FMOD_RESULT, const char *, int);
-static std::vector<char *> gPathList;
+
+HANDLE			ConsoleHandle = NULL; 
+CHAR_INFO		ConsoleBuffer[NUM_COLUMNS * NUM_ROWS] = {0};
+char			WriteBuffer[NUM_COLUMNS * NUM_ROWS] = {0};
+
 static unsigned int gYPos = 0;
+
+bool	Paused = false;
+
 
 void Kuhou_Update()
 {
-    /*
-        Capture key input
-    */
-/*    unsigned int newButtons = 0;
-    while (_kbhit())
-    {
-        int key = _getch();
-        if (key == 0 || key == 224)
-        {
-            key = 256 + _getch(); // Handle multi-char keys
-        }
-
-        if      (key == '1')    newButtons |= (1 << BTN_ACTION1);
-        else if (key == '2')    newButtons |= (1 << BTN_ACTION2);
-        else if (key == '3')    newButtons |= (1 << BTN_ACTION3);
-        else if (key == '4')    newButtons |= (1 << BTN_ACTION4);
-        else if (key == 256+75) newButtons |= (1 << BTN_LEFT);
-        else if (key == 256+77) newButtons |= (1 << BTN_RIGHT);
-        else if (key == 256+72) newButtons |= (1 << BTN_UP);
-        else if (key == 256+80) newButtons |= (1 << BTN_DOWN);
-        else if (key == 32)     newButtons |= (1 << BTN_MORE);
-        else if (key == 27)     newButtons |= (1 << BTN_QUIT);
-        else if (key == 112)    gPaused = !gPaused;
-    }
-
-    gPressedButtons = (gDownButtons ^ newButtons) & newButtons;
-    gDownButtons = newButtons;
-	*/
-    /*
-        Update the screen
-    */
     if (!Paused)
     {
         for (unsigned int i = 0; i < NUM_COLUMNS * NUM_ROWS; i++)
@@ -55,7 +37,7 @@ void Kuhou_Update()
         COORD bufferCoord = {0, 0};
         SMALL_RECT writeRegion = {0, 0, NUM_COLUMNS - 1, NUM_ROWS - 1};
         WriteConsoleOutput(ConsoleHandle, ConsoleBuffer, bufferSize, bufferCoord, &writeRegion);
-        fflush;(stdout);
+        fflush(stdout);
     }
 
     /*
@@ -63,17 +45,7 @@ void Kuhou_Update()
     */
     gYPos = 0;
     memset(WriteBuffer, ' ', sizeof(WriteBuffer));
-/*
-    if (Kuhou_Private_Update)
-    {
-        Kuhou_Private_Update(&PressedButtons);
-    }
-*/
 }
-
-
-
-
 
 void Kuhou_Draw(const char *format, ...)
 {
@@ -104,7 +76,6 @@ void Kuhou_Draw(const char *format, ...)
 
         if (copyLength > NUM_COLUMNS)
         {
-            // Hard wrap by default
             copyLength = NUM_COLUMNS;
 
             // Loop for a soft wrap
@@ -204,18 +175,6 @@ void ERRCHECK_fn(FMOD_RESULT result, const char *file, int line)
     }
 }
 
-
-/*
-void createmusic(char * FilePath)
-{
-	Result = FMOD::System_Create(&System);
-	ERRCHECK(Result);
-
-	gPathList.push_back(FilePath);
-
-	return;
-}
-*/
 void Fmod_init(void **)
 {
 	ConsoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -282,7 +241,7 @@ void Fmod_init(void **)
 
 void Kuhou_Close()
 {
-    for (std::vector<char *>::iterator item = gPathList.begin(); item != gPathList.end(); ++item)
+    for (std::vector<char *>::iterator item = PathList.begin(); item != PathList.end(); ++item)
     {
         free(*item);
     }
@@ -290,4 +249,64 @@ void Kuhou_Close()
     {
         Kuhou_Private_Close();
     }
+}
+
+const char *Kuhou_MediaPath(const char *fileName)
+{
+    char *filePath = (char *)calloc(256, sizeof(char));
+
+    strcat(filePath, "./media/");
+    strcat(filePath, fileName);
+    PathList.push_back(filePath);
+
+    return filePath;
+}
+
+void CreateMusic(char * FileName)
+{
+	Result = FMOD::System_Create(&KuhouSystem);
+	ERRCHECK(Result);
+	
+//	Result = KuhouSystem->getVersion(&version);
+//	ERRCHECK(Result);
+
+	Result = KuhouSystem->init(32,FMOD_INIT_NORMAL,extradriverdata);
+	ERRCHECK(Result);
+
+	Result = KuhouSystem->createSound(Kuhou_MediaPath(FileName),FMOD_DEFAULT,0,&MusicToPlay);
+
+	printf("xxxxxx");
+
+	return;
+}
+
+void Kuhou_Play()
+{
+	int   channelsplaying = 0;
+	unsigned int ms = 0;
+	bool playing;
+	printf("\nasdasd");
+	Result = MusicToPlay->setMode(FMOD_LOOP_OFF);
+	ERRCHECK(Result);
+	do
+	{
+		Result = KuhouSystem->playSound(MusicToPlay,0,false,&Channel); 
+		ERRCHECK(Result);
+		Channel->isPlaying(&playing);
+	}while(playing);
+	Result = KuhouSystem->update();
+	ERRCHECK(Result);
+	FMOD::Sound * current_sound = 0;
+	Result = Channel->isPlaying(&playing);
+	Result = Channel->getPaused(&Paused);
+	Result = Channel->getPosition(&ms,FMOD_TIMEUNIT_MS);
+	ERRCHECK(Result);
+	Channel->getCurrentSound(&current_sound);
+	KuhouSystem->getChannelsPlaying(&channelsplaying);
+}
+void Kuhou_End()
+{
+	Result = MusicToPlay->release();
+	ERRCHECK(Result);
+	Kuhou_Close();
 }

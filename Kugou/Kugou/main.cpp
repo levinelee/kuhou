@@ -5,11 +5,15 @@
 #include "common.h"
 #include "play.h"
 
+int		Kuhou_Private_Argc;
+char **	Kuhou_Private_Argv;
+void *	extradriverdata =0;
+
 int main(int argc , char * argv[])
 {
     Kuhou_Private_Argc = argc;
     Kuhou_Private_Argv = argv;
-	Fmod_init();
+	Fmod_init(&extradriverdata);
 	CreateMusic("drumloop.wav");
 	Kuhou_Play();
 	Kuhou_End();
