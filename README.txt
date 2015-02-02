@@ -1,1 +1,3 @@
-Kuhou
+Kuhou Player
+VERSION 0.0
+BASED ON FMOD and BUILD ON VS2012
